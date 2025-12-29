@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Cabinet Invoice System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body { font-family: 'Battambang', sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; }
+        .invoice-container { background-color: white; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; box-sizing: border-box;}
+        
+        /* Header ថ្មី - រៀបចំអោយដូច Logo */
+        .header { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #285470; /* ពណ៌ខៀវដូច Logo */
+            padding-bottom: 10px;
+        }
+        .logo-area { 
+            width: 120px; 
+            height: 120px; 
+            margin-right: 20px;
+        }
+        /* ដាក់រូប Logo អោយពេញ */
+        .logo-area img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+        }
+        
+        .company-title { flex-grow: 1; }
+        .company-title h1 { 
+            font-family: 'Moul', serif; 
+            margin: 0; 
+            font-size: 28px; 
+            color: #285470; /* ពណ៌អក្សរដូចផ្ទៃ Logo */
+            text-transform: uppercase;
+        }
+        .invoice-details { text-align: right; font-size: 14px; color: #333; }
+
+        /* General Styles */
+        .info-section { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
+        .customer-info { font-weight: bold; margin-bottom: 15px; font-size: 16px; border-bottom: 1px dotted #ccc; padding-bottom: 5px;}
+        .description-box { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+        .blueprint-placeholder { width: 100%; height: 250px; border: 2px dashed #ccc; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #aaa; position: relative; overflow: hidden;}
+        .blueprint-placeholder img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; }
+        th { background-color: #285470; color: white; font-weight: bold; } /* ក្បាលតារាងពណ៌ដូច Logo */
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        .calc-input { width: 100%; border: none; text-align: center; font-family: 'Battambang'; outline: none; }
+        
+        /* Buttons & Footer */
+        .payment-info { margin-top: 20px; font-size: 14px; background: #fdfdfd; padding: 10px; border: 1px solid #eee; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 50px; text-align: center; }
+        .sign-line { width: 200px; border-top: 1px solid black; padding-top: 10px; font-weight: bold; }
+        .control-panel { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000; }
+        .btn { padding: 15px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: 'Battambang'; }
+        .print-btn { background-color: #007bff; }
+        .jpg-btn { background-color: #ff9800; }
+        .no-print-btn, .delete-btn { cursor: pointer; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; border-radius: 3px; }
+        .no-print-btn { background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-top: 10px;}
+        .upload-btn { position: absolute; top: 10px; right: 10px; }
+
+        @media print {
+            .control-panel, .no-print-btn, .delete-btn, .upload-btn { display: none !important; }
+            .invoice-container { box-shadow: none; margin: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <button class="btn print-btn" onclick="window.print()">🖨️ Print / PDF</button>
+        <button class="btn jpg-btn" onclick="saveAsJPG()">💾 Save JPG</button>
+    </div>
+
+    <div class="invoice-container" id="invoice-content">
+        <div class="header">
+            <div class="logo-area">
+                <img src="logo.jpg" alt="Logo" onerror="this.style.display='none'; document.getElementById('logo-text-placeholder').style.display='block'">
+                <div id="logo-text-placeholder" style="display:none; font-size:10px; color:red;">ដាក់រូប logo.jpg ក្នុង Folder</div>
+            </div>
+            
+            <div class="company-title">
+                <h1>Mobile Cabinet</h1>
+                <div style="font-size: 16px; color: #555; margin-top: 5px; font-weight: bold;">វិក្កយបត្រ / INVOICE</div>
+            </div>
+            <div class="invoice-details" contenteditable="true">
+                <b>Tel: 070 684 555</b><br>
+                <b>060 241 555</b>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div contenteditable="true">
+                អាស័យដ្ឋានៈ ដីឡូត៍គ្មានលេខ, ភូមិកោករ្រិច<br>
+                សង្កាត់សំរោងក្រោម, ខណ្ឌពោធិ៍សែនជ័យ<br>
+                រាជធានីភ្នំពេញ
+            </div>
+            <div class="text-right">
+                កាលបរិច្ឆេទ: <span id="date-today"></span>
+            </div>
+        </div>
+
+        <div class="customer-info" contenteditable="true">
+            ឈ្មោះអតិថិជន: CHANNIT <span style="margin-left:20px;">លេខទូរស័ព្ទ: ........................</span>
+        </div>
+
+        <div class="description-box" contenteditable="true">
+            ◻ ជញ្ជាំងសាំងស័ង្កសីក្បឿងស្រទាប់២ហ៊ិន គ្រោងដែក 100x100 បាតដែក 40x80<br>
+            ក្រាលក្ដារក្នុងក្តារតេ កម្រាស់ 15លី [Free កំរាលកៅស៊ូ]<br>
+            ការរៀបចំមានៈ ទ្វារដែក2/បង្អួច2 វែង 2m x 2m / ជើងម៉ាស៊ីនត្រជាក់1<br>
+            📍 ប្រព័ន្ធភ្លើង ឌីសង់ទ័រ1 ក្នុងតាក2 ព្រីភ្លើង2 អំពូលភ្លើង2 ។<br>
+            <b>សម្គាល់ៈ គ្រោងពណ៌ ប្រផេះ / កំរាលកៅស៊ូ ប្រផេះ / សំយាបលៀន 0.1m/ ជើងក្រោម 0.2m=6ដើម..។</b>
+        </div>
+
+        <div class="blueprint-placeholder" id="blueprint-area">
+            <span id="bp-text">ដាក់រូបភាពប្លង់ទីនេះ (Upload)</span>
+            <img id="preview-img" style="display:none;" />
+            <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="loadFile(event)">
+            <button class="upload-btn" onclick="document.getElementById('file-upload').click()">📷 Upload រូប</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30%;">ឈ្មោះទំនិញ</th>
+                    <th style="width: 20%;">ទំហំ</th>
+                    <th style="width: 10%;">ចំនួន</th>
+                    <th style="width: 15%;">តម្លៃរាយ ($)</th>
+                    <th style="width: 15%;">តម្លៃសរុប ($)</th>
+                    <th style="width: 5%;" class="no-print-btn">លុប</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-items">
+                <tr>
+                    <td><input type="text" class="calc-input text-left" value="ទូ 1"></td>
+                    <td><input type="text" class="calc-input" value="3m x 6m"></td>
+                    <td><input type="number" class="calc-input qty" value="1" oninput="calculateTotal()"></td>
+                    <td><input type="number" class="calc-input price" value="1650" oninput="calculateTotal()"></td>
+                    <td class="total-cell">0.00</td>
+                    <td class="no-print-btn"></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="no-print-btn" onclick="addRow()">➕ បន្ថែមទំនិញ</button>
+
+        <div style="margin-top: 20px;">
+            <table style="width: 40%; float: right;">
+                <tr><td class="text-right"><b>តម្លៃសរុប (Total):</b></td><td class="total-cell" id="grand-total">0.00$</td></tr>
+                <tr><td class="text-right">ប្រាក់កក់ (Deposit):</td><td><input type="number" class="calc-input" id="deposit-amt" value="500" oninput="calculateTotal()"></td></tr>
+                <tr><td class="text-right"><b>ប្រាក់នៅសល់ (Balance):</b></td><td class="total-cell" id="balance-due" style="color: red; font-size: 18px;">0.00$</td></tr>
+            </table>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div class="payment-info" contenteditable="true">
+            <b>បញ្ជាក់៖ តម្លៃខាងលើមិនបូកការបង់ពន្ធ</b>
+        </div>
+
+        <div class="signatures">
+            <div><div class="sign-line" contenteditable="true">ហត្ថលេខាអ្នកលក់</div></div>
+            <div><div class="sign-line" contenteditable="true">ហត្ថលេខាអ្នកទិញ</div></div>
+        </div>
+    </div>
+
+    <script>
+        const today = new Date();
+        document.getElementById('date-today').innerText = today.toLocaleDateString('en-GB');
+
+        function calculateTotal() {
+            let rows = document.querySelectorAll('#invoice-items tr');
+            let grandTotal = 0;
+            rows.forEach(row => {
+                let qty = parseFloat(row.querySelector('.qty').value) || 0;
+                let price = parseFloat(row.querySelector('.price').value) || 0;
+                let total = qty * price;
+                row.querySelector('.total-cell').innerText = total.toFixed(2);
+                grandTotal += total;
+            });
+            document.getElementById('grand-total').innerText = grandTotal.toFixed(2) + '$';
+            let deposit = parseFloat(document.getElementById('deposit-amt').value) || 0;
+            let balance = grandTotal - deposit;
+            document.getElementById('balance-due').innerText = balance.toFixed(2) + '$';
+        }
+
+        function addRow() {
+            let table = document.getElementById('invoice-items');
+            let newRow = table.insertRow();
+            newRow.innerHTML = `<td><input type="text" class="calc-input text-left" placeholder="ឈ្មោះ"></td><td><input type="text" class="calc-input" placeholder="ទំហំ"></td><td><input type="number" class="calc-input qty" value="0" oninput="calculateTotal()"></td><td><input type="number" class="calc-input price" value="0" oninput="calculateTotal()"></td><td class="total-cell">0.00</td><td class="no-print-btn"><button class="delete-btn" onclick="removeRow(this)">❌</button></td>`;
+        }
+
+        function removeRow(btn) {
+            btn.parentNode.parentNode.remove();
+            calculateTotal();
+        }
+
+        var loadFile = function(event) {
+            var image = document.getElementById('preview-img');
+            image.src = URL.createObjectURL(event.target.files[0]);
+            image.style.display = 'block';
+            document.getElementById('bp-text').style.display = 'none';
+        };
+
+        function saveAsJPG() {
+            const element = document.getElementById("invoice-content");
+            const btn = document.querySelector(".jpg-btn");
+            btn.innerText = "⏳ កំពុង Save...";
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                ignoreElements: (node) => {
+                    return node.classList.contains('no-print-btn') || node.classList.contains('upload-btn');
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Invoice-' + Date.now() + '.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                btn.innerText = "💾 Save JPG";
+            });
+        }
+        calculateTotal();
+    </script>
+</body>
+</html>
